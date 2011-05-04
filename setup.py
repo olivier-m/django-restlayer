@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-version = __import__('restlayer').__version__
+version = '0.5'
 packages = ['restlayer'] + ['restlayer.%s' % x for x in find_packages('restlayer',)]
 
 setup(
