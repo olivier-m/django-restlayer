@@ -55,7 +55,7 @@ class Response(HttpResponse):
     def __init__(self, *args, **kwargs):
         super(Response, self).__init__(*args, **kwargs)
         self.mime = 'application/json'
-        self.charset = 'UTF8'
+        self.charset = 'UTF-8'
         
         self.data_loader = lambda x, req, **k: x
     
