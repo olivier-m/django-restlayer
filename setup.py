@@ -14,7 +14,7 @@ setup(
     description='HTTP Toolkit',
     author='Olivier Meunier',
     author_email='om@neokraft.net',
-    url='http://bitbucket.org/cedarlab/django-restlayer/',
+    url='https://github.com/olivier-m/django-restlayer',
     packages=packages,
     classifiers=[
         'Development Status :: %s' % version,
