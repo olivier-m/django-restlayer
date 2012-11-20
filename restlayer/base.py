@@ -14,6 +14,7 @@ import mimeparse
 
 from django.conf import settings
 from django.core.mail import mail_admins
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
 
@@ -155,6 +156,37 @@ class Response(HttpResponse):
         for k, v in self.get_common_headers(request).items():
             if k not in self:
                 self[k] = v
+
+    def _paginate(self, request, object_list, limit=50):
+        """
+        Pagination helper
+        """
+        paginator = Paginator(object_list, limit)
+        try:
+            page_no = int(request.GET.get('page', 1))
+        except ValueError:
+            page_no = 1
+        try:
+            page = paginator.page(page_no)
+        except (InvalidPage, EmptyPage):
+            page = paginator.page(1)
+
+        self['X-Pages-Objects'] = paginator.count
+        self['X-Pages-Count'] = paginator.num_pages
+        self['X-Pages-Range'] = ','.join([str(x) for x in paginator.page_range])
+        self['X-Pages-Current'] = page.number
+
+        GET = request.GET.copy()
+        if page.has_next():
+            GET['page'] = page.number + 1
+            self['X-Pages-Next'] = page.number + 1
+            self['X-Pages-Next-URI'] = '%s?%s' % (request.build_absolute_uri(request.path), GET.urlencode())
+        if page.has_previous():
+            GET['page'] = page.number - 1
+            self['X-Pages-Prev'] = page.number - 1
+            self['X-Pages-Prev-URI'] = '%s?%s' % (request.build_absolute_uri(request.path), GET.urlencode())
+
+        return page.object_list
 
 
 class ModelResponse(Response):
