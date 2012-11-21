@@ -18,13 +18,31 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
 
-from restlayer.exc import HttpException, Http406
-from restlayer.utils import ModelDataLoader, get_request_data, xml_dumps
+from restlayer.utils import get_request_data, xml_dumps
+
+
+class FormError(dict):
+    pass
+
+
+class HttpException(Exception):
+    def __init__(self, msg, status=500):
+        super(HttpException, self).__init__(msg, status)
+
+
+class Http406(HttpException):
+    def __init__(self):
+        super(HttpException, self).__init__('', 406)
+
+
+class FormValidationError(HttpException):
+    def __init__(self, form):
+        super(FormValidationError, self).__init__(FormError(form.errors), 400)
 
 
 class BaseResponse(type):
-    def __new__(cls, names, bases, attrs):
-        new_class = super(BaseResponse, cls).__new__(cls, names, bases, attrs)
+    def __new__(mcs, names, bases, attrs):
+        new_class = super(BaseResponse, mcs).__new__(mcs, names, bases, attrs)
 
         new_class.methods = []
 
@@ -118,7 +136,7 @@ class Response(HttpResponse):
 
     def make_response(self, request, *args, **kwargs):
         if request.method.lower() not in self.methods:
-            return HttpResponseNotAllowed(self.methods)
+            return HttpResponseNotAllowed([x.upper() for x in self.methods])
 
         meth = getattr(self, 'response_%s' % request.method.lower())
 
@@ -157,7 +175,7 @@ class Response(HttpResponse):
             if k not in self:
                 self[k] = v
 
-    def _paginate(self, request, object_list, limit=50):
+    def paginate(self, request, object_list, limit=50):
         """
         Pagination helper
         """
@@ -187,17 +205,6 @@ class Response(HttpResponse):
             self['X-Pages-Prev-URI'] = '%s?%s' % (request.build_absolute_uri(request.path), GET.urlencode())
 
         return page.object_list
-
-
-class ModelResponse(Response):
-    fields = ('id',)
-
-    def __init__(self, *args, **kwargs):
-        super(ModelResponse, self).__init__(*args, **kwargs)
-        self.data_loader = ModelDataLoader(self.fields)
-
-    def serialize(self, request, res, **options):
-        return super(ModelResponse, self).serialize(request, res, fields=self.fields, resp=self, **options)
 
 
 class Resource(object):
