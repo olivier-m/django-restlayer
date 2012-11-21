@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.5'
+version = '0.8'
 packages = ['restlayer'] + ['restlayer.%s' % x for x in find_packages('restlayer',)]
 
 setup(
@@ -13,7 +13,7 @@ setup(
     version=version,
     description='HTTP Toolkit',
     author='Olivier Meunier',
-    author_email='om@neokraft.net',
+    author_email='olivier@neokraft.net',
     url='https://github.com/olivier-m/django-restlayer',
     packages=packages,
     classifiers=[
