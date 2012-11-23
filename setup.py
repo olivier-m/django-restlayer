@@ -9,7 +9,7 @@ version = '0.8.1'
 packages = ['restlayer'] + ['restlayer.%s' % x for x in find_packages('restlayer',)]
 
 setup(
-    name='restlayer',
+    name='django-restlayer',
     version=version,
     description='HTTP Toolkit',
     author='Olivier Meunier',
