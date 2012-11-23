@@ -8,12 +8,9 @@ try:
 except ImportError:
     import pickle
 import sys
-import traceback
 
 import mimeparse
 
-from django.conf import settings
-from django.core.mail import mail_admins
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
@@ -220,26 +217,36 @@ class Resource(object):
             return self.handle_exception(e, request)
 
     def handle_exception(self, exc, request):
-        trace = '\n'.join(traceback.format_exception(*sys.exc_info()))
+        from django.utils.log import getLogger
+        from django.conf import settings
+
+        logger = getLogger('django.request')
+        exc_info = sys.exc_info()
+
+        logger.error('Internal Server Error: %s', request.path,
+            exc_info=exc_info,
+            extra={
+                'status_code': 500,
+                'request': request
+            }
+        )
+
+        resp = HttpResponse('', status=500, content_type='text/plain')
+        resp.content = ''
+
         if hasattr(exc, 'resp_obj'):
             resp = exc.resp_obj
             resp.status_code = 500
-            resp.content = ''
             resp.set_common_headers(request)
         else:
             resp = HttpResponse('', status=500, content_type='text/plain')
-            resp.content = ''
+
+        resp.content = 'An error occured.'
 
         if settings.DEBUG:
-            resp.content = trace
-        else:
-            subject = 'Error (%s IP): %s' % ((request.META.get('REMOTE_ADDR') in settings.INTERNAL_IPS and 'internal' or 'EXTERNAL'), request.path)
-            try:
-                request_repr = repr(request)
-            except:
-                request_repr = "Request repr() unavailable"
-            message = "%s\n\n%s" % (trace, request_repr)
-            mail_admins(subject, message, fail_silently=True)
+            from django.views.debug import ExceptionReporter
+            reporter = ExceptionReporter(request, *exc_info)
+            resp.content = reporter.get_traceback_text()
 
         resp['Content-Type'] = 'text/plain'
         return resp
