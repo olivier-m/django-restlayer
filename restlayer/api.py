@@ -12,6 +12,7 @@ import sys
 import mimeparse
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.urlresolvers import reverse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
 
@@ -188,20 +189,25 @@ class Response(HttpResponse):
 
         self['X-Pages-Objects'] = paginator.count
         self['X-Pages-Count'] = paginator.num_pages
-        self['X-Pages-Range'] = ','.join([str(x) for x in paginator.page_range])
         self['X-Pages-Current'] = page.number
 
         GET = request.GET.copy()
         if page.has_next():
             GET['page'] = page.number + 1
             self['X-Pages-Next'] = page.number + 1
-            self['X-Pages-Next-URI'] = '%s?%s' % (request.build_absolute_uri(request.path), GET.urlencode())
+            self['X-Pages-Next-URI'] = '%s?%s' % (self._build_absolute_uri(request), GET.urlencode())
         if page.has_previous():
             GET['page'] = page.number - 1
             self['X-Pages-Prev'] = page.number - 1
-            self['X-Pages-Prev-URI'] = '%s?%s' % (request.build_absolute_uri(request.path), GET.urlencode())
+            self['X-Pages-Prev-URI'] = '%s?%s' % (self._build_absolute_uri(request), GET.urlencode())
 
         return page.object_list
+
+    def _build_absolute_uri(self, request, location=None):
+        return request.build_absolute_uri(location)
+
+    def reverse(self, request, view, args=None, kwargs=None):
+        return self._build_absolute_uri(request, reverse(view, args=args, kwargs=kwargs))
 
 
 class Resource(object):
