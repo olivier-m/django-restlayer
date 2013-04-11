@@ -27,15 +27,14 @@ class ModelDataLoader(object):
             if callable(f):
                 return f(instance, request)
 
-        try:
+        if hasattr(instance, field):
             f = getattr(instance, field)
-            if callable(f):
-                return f()
-            return f
-        except AttributeError:
-            pass
+        else:
+            raise ValueError('Field %s not found.' % field)
 
-        raise ValueError('Field %s not found.' % field)
+        if callable(f):
+            return f()
+        return f
 
 
 class ModelResponse(Response):
@@ -47,3 +46,8 @@ class ModelResponse(Response):
 
     def serialize(self, request, res, **options):
         return super(ModelResponse, self).serialize(request, res, fields=self.fields, resp=self, **options)
+
+    def get_data(self, request, res, **options):
+        if callable(self.data_loader):
+            fields = options.pop('fields', self.fields)
+            return self.data_loader(res, request, fields=fields, resp=self, **options)
