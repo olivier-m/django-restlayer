@@ -66,7 +66,7 @@ class Response(HttpResponse):
 
     deserializers = (
         ('application/x-www-form-urlencoded', get_request_data),
-        ('application/json', lambda req: json.loads(req.raw_post_data or "{}")),
+        ('application/json', lambda req: json.loads(req.body or "{}")),
     )
 
     def __init__(self, *args, **kwargs):

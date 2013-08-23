@@ -5,20 +5,22 @@
 
 from setuptools import setup, find_packages
 
-version = '0.8.2'
-packages = ['restlayer'] + ['restlayer.%s' % x for x in find_packages('restlayer',)]
+execfile('restlayer/version.py')
+packages = find_packages(exclude=['*.tests'])
 
 setup(
     name='django-restlayer',
-    version=version,
+    version=__version__,
     description='HTTP Toolkit',
     author='Olivier Meunier',
     author_email='olivier@neokraft.net',
     url='https://github.com/olivier-m/django-restlayer',
+    license='MIT License',
     packages=packages,
     classifiers=[
-        'Development Status :: %s' % version,
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
+        'Framework :: Django',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
