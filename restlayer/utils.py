@@ -3,13 +3,13 @@
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from StringIO import StringIO
 
 from django.utils.encoding import smart_unicode
 from django.utils.xmlutils import SimplerXMLGenerator
+
+
+CONTENT_VERBS = ('POST', 'PUT', 'PATCH')
 
 
 def get_request_data(request):
@@ -22,19 +22,21 @@ def get_request_data(request):
     The try/except abominiation here is due to a bug
     in mod_python. This should fix it.
     """
-    if request.method == "PUT":
-        try:
-            request.method = "POST"
-            request._load_post_and_files()
-            request.method = "PUT"
-        except AttributeError:
-            request.META['REQUEST_METHOD'] = 'POST'
-            request._load_post_and_files()
-            request.META['REQUEST_METHOD'] = 'PUT'
+    if request.method in CONTENT_VERBS:
+        if request.method == 'POST':
+            return request.POST
+        else:
+            orig_meth = request.method
+            try:
+                request.method = 'POST'
+                request._load_post_and_files()
+                request.method = orig_meth
+            except AttributeError:
+                request.META['REQUEST_METHOD'] = 'POST'
+                request._load_post_and_files()
+                request.META['REQUEST_METHOD'] = orig_meth
 
-        return request.POST
-    elif request.method == "POST":
-        return request.POST
+            return request.POST
 
 
 def xml_dumps(data):
@@ -52,7 +54,7 @@ def xml_dumps(data):
         else:
             xml.characters(smart_unicode(data))
 
-    stream = StringIO.StringIO()
+    stream = StringIO()
 
     xml = SimplerXMLGenerator(stream, "utf-8")
     xml.startDocument()

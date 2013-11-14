@@ -16,7 +16,7 @@ from django.core.urlresolvers import reverse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
 
-from restlayer.utils import get_request_data, xml_dumps
+from restlayer.utils import get_request_data, xml_dumps, CONTENT_VERBS
 
 
 class FormError(dict):
@@ -66,6 +66,7 @@ class Response(HttpResponse):
 
     deserializers = (
         ('application/x-www-form-urlencoded', get_request_data),
+        ('multipart/form-data', get_request_data),
         ('application/json', lambda req: json.loads(req.body or "{}")),
     )
 
@@ -105,9 +106,19 @@ class Response(HttpResponse):
 
     def init_response(self, request):
         accept = request.META.get('HTTP_ACCEPT', None)
+        if not accept and '*/*' in [x[0] for x in self.serializers]:
+            accept = '*/*'
+
+        # OPTIONS special case
+        if request.method == 'OPTIONS':
+            if len(self.serializers) > 0:
+                # OPTIONS should always return a response
+                accept = self.serializers[0][0]
+
         if not accept:
             raise Http406
 
+        # Prepare response now
         try:
             self.mime = mimeparse.best_match([x[0] for x in self.serializers], accept)
             if not self.mime:
@@ -116,7 +127,7 @@ class Response(HttpResponse):
             raise Http406
 
         # Reading data
-        if request.method in ('POST', 'PUT'):
+        if request.method in CONTENT_VERBS:
             content_type = request.META.get('CONTENT_TYPE', '').split(';', 1)[0]
 
             deserializers = dict(self.deserializers)
@@ -129,7 +140,7 @@ class Response(HttpResponse):
                 raise Http406
             try:
                 request.data = deserializer(request)
-            except BaseException, e:
+            except BaseException as e:
                 raise HttpException(str(e), 400)
 
     def make_response(self, request, *args, **kwargs):
@@ -151,14 +162,14 @@ class Response(HttpResponse):
         except Http404:
             self.status_code = 404
             self.content = self.serialize(request, "Resource not found")
-        except Http406, e:
+        except Http406 as e:
             self.status_code = e.args[1]
             self.content = ''
             self['content-type'] = 'text/plain'
-        except HttpException, e:
+        except HttpException as e:
             self.status_code = e.args[1]
             self.content = self.serialize(request, e.args[0])
-        except BaseException, e:
+        except BaseException as e:
             e.resp_obj = self
             raise
 
@@ -219,7 +230,7 @@ class Resource(object):
     def __call__(self, request, *args, **kwargs):
         try:
             return self.resp_class().make_response(request, *args, **kwargs)
-        except BaseException, e:
+        except BaseException as e:
             return self.handle_exception(e, request)
 
     def handle_exception(self, exc, request):
