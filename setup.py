@@ -23,6 +23,7 @@ setup(
         'mimeparse',
     ],
     packages=['restlayer'],
+    test_suite='tests.runtests',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',

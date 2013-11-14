@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# This file is part of Django restlayer released under the MIT license.
+# See the LICENSE for more information.
 from django import db
 
 from restlayer.api import Response
