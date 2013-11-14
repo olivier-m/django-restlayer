@@ -3,20 +3,26 @@
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
-execfile('restlayer/version.py')
-packages = find_packages(exclude=['*.tests'])
+with open('restlayer/version.py') as fp:
+    g = {}
+    exec(fp.read(), g)
+    version = g['__version__']
 
 setup(
     name='django-restlayer',
-    version=__version__,
+    version=version,
     description='HTTP Toolkit',
     author='Olivier Meunier',
     author_email='olivier@neokraft.net',
     url='https://github.com/olivier-m/django-restlayer',
     license='MIT License',
-    packages=packages,
+    install_requires=[
+        'django >= 1.4, < 1.7',
+        'mimeparse',
+    ],
+    packages=['restlayer'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
