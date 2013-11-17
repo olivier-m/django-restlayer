@@ -104,7 +104,7 @@ class Response(HttpResponse):
         if not renderer:
             raise Http406
 
-        self['content-type'] = '%s; charset=%s' % (self.mime, self.charset)
+        self['content-type'] = '{0}; charset={1}'.format(self.mime, self.charset)
         return renderer(result)
 
     def init_response(self, request):
@@ -150,7 +150,7 @@ class Response(HttpResponse):
         if request.method.lower() not in self.methods:
             return HttpResponseNotAllowed([x.upper() for x in self.methods])
 
-        meth = getattr(self, 'response_%s' % request.method.lower())
+        meth = getattr(self, 'response_{0}'.format(request.method.lower()))
 
         try:
             self.init_response(request)

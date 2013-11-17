@@ -35,7 +35,7 @@ class ModelDataLoader(object):
         if hasattr(instance, field):
             f = getattr(instance, field)
         else:
-            raise ValueError('Field %s not found.' % field)
+            raise ValueError('Field {0} not found.'.format(field))
 
         if callable(f):
             return f()
