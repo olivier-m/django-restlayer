@@ -2,6 +2,8 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
+
 import json
 try:
     import cPickle as pickle
@@ -15,6 +17,8 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404
+from django.utils.encoding import smart_text
+from django.utils.six import add_metaclass
 
 from restlayer.utils import get_request_data, xml_dumps, CONTENT_VERBS
 
@@ -55,9 +59,8 @@ class BaseResponse(type):
         return new_class
 
 
+@add_metaclass(BaseResponse)
 class Response(HttpResponse):
-    __metaclass__ = BaseResponse
-
     serializers = (
         ('application/json', lambda x: json.dumps(x, indent=1, cls=DjangoJSONEncoder)),
         ('application/xml', xml_dumps),
@@ -67,7 +70,7 @@ class Response(HttpResponse):
     deserializers = (
         ('application/x-www-form-urlencoded', get_request_data),
         ('multipart/form-data', get_request_data),
-        ('application/json', lambda req: json.loads(req.body or "{}")),
+        ('application/json', lambda req: json.loads(smart_text(req.body) or '{}')),
     )
 
     def __init__(self, *args, **kwargs):
@@ -206,11 +209,17 @@ class Response(HttpResponse):
         if page.has_next():
             GET['page'] = page.number + 1
             self['X-Pages-Next'] = page.number + 1
-            self['X-Pages-Next-URI'] = '%s?%s' % (self._build_absolute_uri(request), GET.urlencode())
+            self['X-Pages-Next-URI'] = '{0}?{1}'.format(
+                self._build_absolute_uri(request),
+                GET.urlencode()
+            )
         if page.has_previous():
             GET['page'] = page.number - 1
             self['X-Pages-Prev'] = page.number - 1
-            self['X-Pages-Prev-URI'] = '%s?%s' % (self._build_absolute_uri(request), GET.urlencode())
+            self['X-Pages-Prev-URI'] = '{0}?{1}'.format(
+                self._build_absolute_uri(request),
+                GET.urlencode()
+            )
 
         return page.object_list
 
@@ -240,7 +249,8 @@ class Resource(object):
         logger = getLogger('django.request')
         exc_info = sys.exc_info()
 
-        logger.error('Internal Server Error: %s', request.path,
+        logger.error(
+            'Internal Server Error: %s', request.path,
             exc_info=exc_info,
             extra={
                 'status_code': 500,

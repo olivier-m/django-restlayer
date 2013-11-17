@@ -2,10 +2,14 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
+
 from django.conf.urls import patterns, url
 
 
-urlpatterns = patterns('restlayer.tests.resources',
+urlpatterns = patterns(
+    'restlayer.tests.resources',
+
     url(r'^$', 'simple', name='simple'),
     url(r'^post$', 'simple_post', name='simple_post'),
     url(r'^echo$', 'simple_echo', name='simple_echo'),

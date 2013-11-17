@@ -2,6 +2,8 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
+
 from django.shortcuts import get_object_or_404
 
 from restlayer import Resource, Response, ModelResponse, FormValidationError

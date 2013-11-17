@@ -2,12 +2,16 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
+
 import json
 import pickle
-from urlparse import urlparse
 
 from django.test import Client, TestCase
 from django.test.client import FakePayload
+from django.utils.encoding import smart_text
+from django.utils.six.moves.urllib.parse import urlparse
+
 
 __all__ = ('SimpleTest', 'SimpleObjectTest')
 
@@ -63,7 +67,7 @@ class SimpleTest(BaseTestCase):
     def test_format(self):
         r = self.client.get('/', HTTP_ACCEPT='application/json')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(json.loads(r.content), ['foo', 'bar'])
+        self.assertEqual(json.loads(smart_text(r.content)), ['foo', 'bar'])
 
         r = self.client.get('/', HTTP_ACCEPT='application/python-pickle')
         self.assertEqual(r.status_code, 200)
@@ -71,7 +75,11 @@ class SimpleTest(BaseTestCase):
 
         r = self.client.get('/', HTTP_ACCEPT='application/xml')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.content, '<?xml version="1.0" encoding="utf-8"?>\n<response><resource>foo</resource><resource>bar</resource></response>')
+        self.assertEqual(
+            r.content,
+            b'<?xml version="1.0" encoding="utf-8"?>\n' +
+            b'<response><resource>foo</resource><resource>bar</resource></response>'
+        )
 
     def test_not_allowed(self):
         r = self.client.post('/', {'foo': 'bar'}, HTTP_ACCEPT='application/json')
@@ -79,39 +87,45 @@ class SimpleTest(BaseTestCase):
         self.assertEqual(r['allow'], 'GET, HEAD, OPTIONS')
 
     def test_post_form(self):
-        r = self.client.post('/post', 'foo=bar', HTTP_ACCEPT='application/json',
-                            content_type='application/x-www-form-urlencoded')
+        r = self.client.post(
+            '/post', 'foo=bar', HTTP_ACCEPT='application/json',
+            content_type='application/x-www-form-urlencoded'
+        )
         self.assertEqual(r.status_code, 201)
-        self.assertEqual(json.loads(r.content), {'foo': 'bar'})
+        self.assertEqual(json.loads(smart_text(r.content)), {'foo': 'bar'})
         self.assertEqual(r['Location'], 'http://testserver/post')
 
     def test_post_json(self):
-        r = self.client.post('/post', json.dumps({'foo': 'bar'}), HTTP_ACCEPT='application/json',
-                            content_type='application/json')
+        r = self.client.post(
+            '/post', json.dumps({'foo': 'bar'}), HTTP_ACCEPT='application/json',
+            content_type='application/json'
+        )
         self.assertEqual(r.status_code, 201)
-        self.assertEqual(json.loads(r.content), {'foo': 'bar'})
+        self.assertEqual(json.loads(smart_text(r.content)), {'foo': 'bar'})
         self.assertEqual(r['Location'], 'http://testserver/post')
 
     def test_put_patch(self):
         r = self.client.put('/echo', 'foo=1', HTTP_ACCEPT='application/json',
                             content_type='application/x-www-form-urlencoded')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(json.loads(r.content)['method'], 'PUT')
+        self.assertEqual(json.loads(smart_text(r.content))['method'], 'PUT')
 
-        r = self.client.patch('/echo', 'foo=1', HTTP_ACCEPT='application/json',
-                            content_type='application/x-www-form-urlencoded')
+        r = self.client.patch(
+            '/echo', 'foo=1', HTTP_ACCEPT='application/json',
+            content_type='application/x-www-form-urlencoded'
+        )
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(json.loads(r.content)['method'], 'PATCH')
+        self.assertEqual(json.loads(smart_text(r.content))['method'], 'PATCH')
 
     def test_errors(self):
         r = self.client.get('/error', HTTP_ACCEPT='application/json')
         self.assertEqual(r['content-type'], 'text/plain')
-        self.assertEqual(r.content, 'An error occured.')
+        self.assertEqual(r.content, b'An error occured.')
 
         with self.settings(DEBUG=True):
             r = self.client.get('/error', HTTP_ACCEPT='application/json')
             self.assertEqual(r['content-type'], 'text/plain')
-            self.assertTrue(r.content.startswith('Exception at /error'))
+            self.assertTrue(smart_text(r.content).startswith('Exception at /error'))
             self.assertTrue(len(r.content) > 1000)
 
     def test_serializers(self):
@@ -120,11 +134,11 @@ class SimpleTest(BaseTestCase):
 
         r = self.client.get('/serialize/text', HTTP_ACCEPT='text/plain')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.content, 'test')
+        self.assertEqual(r.content, b'test')
 
         r = self.client.get('/serialize/any')
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.content, 'any')
+        self.assertEqual(r.content, b'any')
 
 
 class SimpleObjectTest(BaseTestCase):
@@ -139,7 +153,7 @@ class SimpleObjectTest(BaseTestCase):
         self.assertTrue(r.has_header('x-pages-current') and r['x-pages-current'] == '1')
         self.assertTrue(r.has_header('x-pages-objects') and r['x-pages-objects'] == '0')
 
-        self.assertEqual(json.loads(r.content), [])
+        self.assertEqual(json.loads(smart_text(r.content)), [])
 
     def test_object_create(self):
         r = self.create_object(foo='foo1', bar=2)
@@ -149,7 +163,7 @@ class SimpleObjectTest(BaseTestCase):
 
         r = self.client.get(loc, HTTP_ACCEPT='application/json')
         self.assertEqual(r.status_code, 200)
-        data = json.loads(r.content)
+        data = json.loads(smart_text(r.content))
 
         self.assertEqual(data['foo'], 'foo1')
         self.assertEqual(data['bar'], 2)
@@ -162,7 +176,7 @@ class SimpleObjectTest(BaseTestCase):
         r = self.client.put(loc, 'foo=foo2&bar=3', HTTP_ACCEPT='application/json',
                             content_type='application/x-www-form-urlencoded')
         self.assertEqual(r.status_code, 200)
-        data = json.loads(r.content)
+        data = json.loads(smart_text(r.content))
 
         self.assertEqual(data['foo'], 'foo2')
         self.assertEqual(data['bar'], 3)
@@ -178,7 +192,7 @@ class SimpleObjectTest(BaseTestCase):
     def test_404(self):
         r = self.client.get('/objects/10', HTTP_ACCEPT='application/json')
         self.assertEqual(r.status_code, 404)
-        self.assertEqual(json.loads(r.content), 'Resource not found')
+        self.assertEqual(json.loads(smart_text(r.content)), 'Resource not found')
 
     def test_pagination(self):
         for i in range(0, 32):
@@ -198,4 +212,4 @@ class SimpleObjectTest(BaseTestCase):
         self.assertTrue(r.has_header('x-pages-next') and r.has_header('x-pages-next-uri'))
         self.assertTrue(r.has_header('x-pages-prev') and r.has_header('x-pages-prev-uri'))
 
-        self.assertEqual(len(json.loads(r.content)), 10)
+        self.assertEqual(len(json.loads(smart_text(r.content))), 10)

@@ -2,10 +2,11 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
 
-from StringIO import StringIO
+from django.utils.six import StringIO
+from django.utils.encoding import smart_text
 
-from django.utils.encoding import smart_unicode
 from django.utils.xmlutils import SimplerXMLGenerator
 
 
@@ -52,7 +53,7 @@ def xml_dumps(data):
                 to_xml(xml, value)
                 xml.endElement(key)
         else:
-            xml.characters(smart_unicode(data))
+            xml.characters(smart_text(data))
 
     stream = StringIO()
 

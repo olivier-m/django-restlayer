@@ -18,9 +18,9 @@ except ImportError:
 
 
 APPS = (
-    'django.contrib.staticfiles',
     'restlayer',
 )
+
 
 def setup_test_environment():
     # reset settings

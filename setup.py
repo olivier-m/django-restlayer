@@ -2,6 +2,7 @@
 #
 # This file is part of Django restlayer released under the MIT license.
 # See the LICENSE for more information.
+from __future__ import (print_function, division, absolute_import, unicode_literals)
 
 from setuptools import setup
 
@@ -19,8 +20,8 @@ setup(
     url='https://github.com/olivier-m/django-restlayer',
     license='MIT License',
     install_requires=[
-        'django >= 1.4, < 1.7',
-        'mimeparse',
+        'django >= 1.5, < 1.7',
+        'python-mimeparse >= 0.1.4',
     ],
     packages=['restlayer'],
     test_suite='tests.runtests',
