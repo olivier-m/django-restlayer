@@ -210,14 +210,14 @@ class Response(HttpResponse):
             GET['page'] = page.number + 1
             self['X-Pages-Next'] = page.number + 1
             self['X-Pages-Next-URI'] = '{0}?{1}'.format(
-                self._build_absolute_uri(request),
+                self._build_absolute_uri(request, request.path),
                 GET.urlencode()
             )
         if page.has_previous():
             GET['page'] = page.number - 1
             self['X-Pages-Prev'] = page.number - 1
             self['X-Pages-Prev-URI'] = '{0}?{1}'.format(
-                self._build_absolute_uri(request),
+                self._build_absolute_uri(request, request.path),
                 GET.urlencode()
             )
 
