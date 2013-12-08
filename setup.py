@@ -11,10 +11,15 @@ with open('restlayer/version.py') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
+def readme():
+    with open('README.md', 'r') as fp:
+        return fp.read()
+
 setup(
     name='django-restlayer',
     version=version,
-    description='HTTP Toolkit',
+    description='HTTP REST toolkit for Django',
+    long_description=readme(),
     author='Olivier Meunier',
     author_email='olivier@neokraft.net',
     url='https://github.com/olivier-m/django-restlayer',
