@@ -12,7 +12,7 @@ with open('restlayer/version.py') as fp:
     version = g['__version__']
 
 def readme():
-    with open('README.md', 'r') as fp:
+    with open('README.rst', 'r') as fp:
         return fp.read()
 
 setup(
